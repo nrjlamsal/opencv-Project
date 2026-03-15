@@ -2,13 +2,8 @@ import cv2 as cv
 import numpy as np
 # reading image 
 
-img=cv.imread("niraj.jpg")
+img=cv.imread("niraj.jpg",cv.IMREAD_GRAYSCALE)
 
-sharpen_kernel = np.array([
-    [0,-1,0],
-    [-1,5,-1],
-    [0,-1,0]
-])
 
 if img is None:
     print("No image is found")
@@ -16,10 +11,9 @@ else:
     print(img.shape)
     y,x=img.shape[:2]
   
-    sharpened = cv.filter2D(img,-1,sharpen_kernel)
-     
+    edge=cv.Canny(img,50,150)
     cv.imshow("Normal",img)
-    cv.imshow("Sharpaned ",sharpened)
+    cv.imshow("Canny  ",edge)
 
     cv.waitKey(0)
     cv.destroyAllWindows()
