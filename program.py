@@ -7,10 +7,9 @@ if img is None:
     print("No image is found")
 else:
     print(img.shape)
-    croppedimg=img[0:959,0:719]
-    cv.imshow("Photo1",img)
-
-    cv.imshow("Photo",croppedimg)
+    x=cv.getRotationMatrix2D((959//2,719//2),270,1.5)
+    rotate_img=cv.warpAffine(img,x,(600,800))
+    cv.imshow("Rotated Image ",rotate_img)
     cv.waitKey(0)
     cv.destroyAllWindows()
 
