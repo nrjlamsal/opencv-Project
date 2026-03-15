@@ -3,16 +3,18 @@ import cv2 as cv
 
 img=cv.imread("niraj.jpg")
 
-if img is not None:
-    print("image found")
-    print(img.shape) 
-    gray=cv.cvtColor(img,cv.COLOR_BGR2GRAY)
-    cv.imwrite("newsaved.jpg",gray)
-    cv.imshow("photo",img)
-    cv.waitKey(0)
-    cv.destroyAllWindows() 
+if img is None:
+    print("No image is found")
 else:
-    print("Imaage not loaded")
+    print(img.shape)
+    resized=cv.resize(img,(719,959))
+    cv.imshow("Photo",resized)
+    cv.waitKey(0)
+    cv.destroyAllWindows()
+
+
+
+
 
 # #reading videos
 
