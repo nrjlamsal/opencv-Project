@@ -8,8 +8,7 @@ if img is None:
 else:
     print(img.shape)
     y,x=img.shape[:2]
-    cv.rectangle(img,(0,0),(x//2,y//2),(255,0,0),2)
-    cv.rectangle(img,(x//2,0),(0,y//2),(255,0,0),2)
+    cv.circle(img,(x//2,y//2),100,(255,0,0),2)
     
     cv.imshow("Rotated Image ",img)
     cv.waitKey(0)
