@@ -7,8 +7,10 @@ if img is None:
     print("No image is found")
 else:
     print(img.shape)
-    resized=cv.resize(img,(719,959))
-    cv.imshow("Photo",resized)
+    croppedimg=img[0:959,0:719]
+    cv.imshow("Photo1",img)
+
+    cv.imshow("Photo",croppedimg)
     cv.waitKey(0)
     cv.destroyAllWindows()
 
