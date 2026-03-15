@@ -22,19 +22,28 @@ import cv2 as cv
 
 vd=cv.VideoCapture(0)
 
-while True:
-   check,frame=vd.read()
-   if  not check :
-      print(" Could not read frames")
-      break
-    
-   cv.imshow("Webcam",frame)
+width=int(vd.get(cv.CAP_PROP_FRAME_WIDTH))
+height=int(vd.get(cv.CAP_PROP_FRAME_HEIGHT))
+codec=cv.VideoWriter_fourcc(*'XVID')
+recorder=cv.VideoWriter("reocrded.mp4",codec,20,(width,height))
 
-   if cv.waitKey(1) & 0xFF==ord('q'):
-      print("qutting")
-      break
-   
+while True:
+    sucess,frame= vd.read()
+    if not sucess:
+        break
+    recorder.write(frame)
+    cv.imshow("Recording live",frame)
+    
+    if cv.waitKey(1) & 0xFF == ord('q'):
+        break
+
 vd.release()
+recorder.release()
 cv.destroyAllWindows()
+
+     
+
+
+
 
  
