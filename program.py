@@ -7,8 +7,11 @@ if img is None:
     print("No image is found")
 else:
     print(img.shape)
-    flipped_img = cv.flip(img,0)
-    cv.imshow("Rotated Image ",flipped_img)
+    y,x=img.shape[:2]
+    cv.line(img,(0,0),(x,y),(255,0,0),2)
+    cv.line(img,(x,0),(0,y),(255,0,0),2)
+    
+    cv.imshow("Rotated Image ",img)
     cv.waitKey(0)
     cv.destroyAllWindows()
 
