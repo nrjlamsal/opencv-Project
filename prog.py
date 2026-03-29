@@ -9,7 +9,7 @@ face_mesh = mp_face_mesh.FaceMesh(
     refine_landmarks=True
 )
 
-cap = cv.VideoCapture(1)
+cap = cv.VideoCapture(0)
 
 while True:
 
