@@ -24,9 +24,6 @@ while True:
     distance = fr.face_distance([face0endcoding],face1encoding)
     break    
 
-    facelandmart= fr.face_landmarks(frame)
-    print (facelandmart)
-    break
-
+ 
    
 
