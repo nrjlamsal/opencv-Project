@@ -1,3 +1,4 @@
+# the program is to track the iris of the eye using mediapipe and opencv
 import cv2 as cv
 import mediapipe as mp
 
@@ -8,7 +9,7 @@ face_mesh = mp_face_mesh.FaceMesh(
     refine_landmarks=True
 )
 
-cap = cv.VideoCapture(0)
+cap = cv.VideoCapture(1)
 
 while True:
 
