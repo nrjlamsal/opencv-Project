@@ -12,6 +12,8 @@ class handDetector():
 
         self.mpHands = mp.solutions.hands
         self.hands = self.mpHands.Hands(static_image_mode=self.mode, max_num_hands=self.maxHands, min_detection_confidence=self.detectionCon, min_tracking_confidence=self.trackcon)
+        self.mpDraw = mp.solutions.drawing_utils
+
 
     def findHands(self, img, draw = True):
         imgRGB = cv.cvtColor(img, cv.COLOR_BGR2RGB)
@@ -19,7 +21,6 @@ class handDetector():
         if hasattr(self, 'results') and hasattr(self.results, 'multi_hand_landmarks') and self.results.multi_hand_landmarks:
             for handLms in self.results.multi_hand_landmarks:
                 if draw:
-                    self.mpDraw = mp.solutions.drawing_utils
                     self.mpDraw.draw_landmarks(img, handLms, self.mpHands.HAND_CONNECTIONS) 
         return img
     
@@ -34,7 +35,6 @@ class handDetector():
                 self.lmList.append([id, cx, cy])
                 if draw:
                     cv.circle(img, (cx, cy), 5, (255, 0, 0), cv.FILLED)
-                    self.mpDraw = mp.solutions.drawing_utils
                     self.mpDraw.draw_landmarks(img, myHand, self.mpHands.HAND_CONNECTIONS) 
 
 
@@ -50,8 +50,8 @@ if __name__ == "__main__":
      while True:
         success, img = cap.read()
         img = cv.flip(img, 1)
-        img = detector.findHands(img, draw = False)
-        lmList = detector.findPosition(img)
+        img = detector.findHands(img, draw = False) # insdie findHands we are processing and storing landmarks in results
+        lmList = detector.findPosition(img) # we get the list of landmarks on 1st hand detected and if we give handNo = 1 then we get the list of landmarks on 2nd hand detected
         if len(lmList) != 0:
             print(lmList[4])
         
