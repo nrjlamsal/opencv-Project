@@ -14,6 +14,8 @@ class handDetector():
         self.hands = self.mpHands.Hands(static_image_mode=self.mode, max_num_hands=self.maxHands, min_detection_confidence=self.detectionCon, min_tracking_confidence=self.trackcon)
         self.mpDraw = mp.solutions.drawing_utils
 
+        self.tipIds = [4, 8, 12, 16, 20] # these are the ids of the tips of the fingers in the hand landmarks
+
 
     def findHands(self, img, draw = True):
         imgRGB = cv.cvtColor(img, cv.COLOR_BGR2RGB)
@@ -24,7 +26,7 @@ class handDetector():
                     self.mpDraw.draw_landmarks(img, handLms, self.mpHands.HAND_CONNECTIONS) 
         return img
     
-    def findPosition(self, img, handNo = 0, draw = True):
+    def findPosition(self, img, handNo = 0, draw = True): # handNo is the hand number we want to find the position of, if we have detected 2 hands then handNo = 0 will give us the position of the first hand and handNo = 1 will give us the position of the second hand
         self.lmList = []
         if hasattr(self, 'results') and hasattr(self.results, 'multi_hand_landmarks') and self.results.multi_hand_landmarks:
             myHand = self.results.multi_hand_landmarks[handNo] 
@@ -40,7 +42,20 @@ class handDetector():
 
         return self.lmList
     
-    
+    def fingersUp(self):
+        fingers = []
+        # Thumb
+        if self.lmList[self.tipIds[0]][1] < self.lmList[self.tipIds[0] - 1][1]: # if the x coordinate of the tip of the thumb is greater than the x coordinate of the point before the tip then the thumb is up
+            fingers.append(1)
+        else:
+            fingers.append(0)
+        # Fingers
+        for id in range(1, 5):
+            if self.lmList[self.tipIds[id]][2] < self.lmList[self.tipIds[id] - 2][2]: 
+                fingers.append(1)
+            else:
+                fingers.append(0)
+        return fingers
 
 if __name__ == "__main__":
      cTime =0
