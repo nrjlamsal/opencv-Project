@@ -7,7 +7,7 @@ import time
 brushThickenss = 15
 ereserThickenss= 50
 
-vdoptr = cv.VideoCapture(0)
+vdoptr = cv.VideoCapture(1)
 
 dectctor = htm.handDetector(detectionCon = 0.85)
 drawcolor = (255, 0, 255)
@@ -39,6 +39,8 @@ while True:
 
 
         if  fingers[1] and fingers[2]:
+            xp,yp = 0,0
+
             print("Selection Mode")
             if y1 < 125:
                 if 0 < x1 < w//4:
