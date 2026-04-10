@@ -1,288 +1,239 @@
-import face_recognition
 import cv2 as cv
+import face_recognition as fr
 import numpy as np
+import pickle
 import os
+import time
 
-# ─── CONFIG ───────────────────────────────────────────────
-ENCODING_PATH        = "face_data/encoding.npy"
-PHOTOS_NEEDED        = 5
-MATCH_THRESHOLD      = 0.5    # lower = stricter. 0.4 strict, 0.6 lenient
-TEXTURE_THRESHOLD    = 100.0  # lower it to 50-60 if real face keeps failing
-DETECT_EVERY_N       = 3      # run face detection every N frames (reduces lag)
-FRAME_SCALE          = 0.5    # shrink frame to this size for detection only
+ENCODINGS_FILE     = "user_encodings.pkl"
+FRAMES_TO_CAPTURE  = 15      
+MATCH_THRESHOLD    = 0.5    
+REGISTRATION_DELAY = 0.3    
 
-
-# ─── STEP 1: CAPTURE FACE ─────────────────────────────────
 def capture_face(frame):
     """
-    Find face in frame.
-    Resizes frame to half size for faster detection.
-    Scales coordinates back to full size.
-    Uses HOG model (faster than CNN, accurate enough).
-    Returns (face_location, face_crop) or (None, None) if no face found.
+    Takes a BGR frame from OpenCV.
+    Converts to RGB for face_recognition.
+    Returns face locations and cropped face.
+    Returns None, None if no face found.
     """
-    # shrink frame for faster detection
-    small = cv.resize(frame, (0, 0), fx=FRAME_SCALE, fy=FRAME_SCALE)
-    rgb   = cv.cvtColor(small, cv.COLOR_BGR2RGB)
+    # OpenCV gives BGR — face_recognition needs RGB
+    rgb_frame = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
 
-    # hog is much faster than default cnn model
-    locations = face_recognition.face_locations(rgb, model="hog")
+    locations = fr.face_locations(rgb_frame)
 
-    if not locations:
+    if len(locations) == 0:
         return None, None
 
-    # scale coordinates back to full frame size
     top, right, bottom, left = locations[0]
-    top    = int(top    / FRAME_SCALE)
-    right  = int(right  / FRAME_SCALE)
-    bottom = int(bottom / FRAME_SCALE)
-    left   = int(left   / FRAME_SCALE)
-
     face_crop = frame[top:bottom, left:right]
-    return (top, right, bottom, left), face_crop
+
+    return locations, face_crop
 
 
-# ─── STEP 2: TEXTURE CHECK (ANTI SPOOF) ───────────────────
-def check_texture(face_crop):
-    """
-    Real faces have skin texture — photos are flat and smooth.
-    Laplacian measures how much detail is in the image.
-    High variance = real face. Low variance = flat printed photo.
-    Returns True if real, False if likely fake.
-    """
-    if face_crop is None or face_crop.size == 0:
-        return False
-
-    gray      = cv.cvtColor(face_crop, cv.COLOR_BGR2GRAY)
-    laplacian = cv.Laplacian(gray, cv.CV_64F)
-    variance  = laplacian.var()
-
-    print(f"Texture variance: {variance:.2f}  (need > {TEXTURE_THRESHOLD})")
-    return variance > TEXTURE_THRESHOLD
-
-
-# ─── STEP 3: REGISTRATION ─────────────────────────────────
 def register_user(cap):
     """
-    First time setup.
-    Captures 5 photos, computes encodings, averages them, saves as .npy file.
+    Captures multiple frames of the user's face.
+    Saves all encodings to disk as .pkl file.
+    Only runs when no .pkl file exists (first time only).
     """
-    print("\n--- REGISTRATION MODE ---")
-    print("Look at the camera. Press SPACE to capture each photo.")
+    print("\n[ REGISTRATION MODE ]")
+    print("Look at the camera. Registration starts in 3 seconds...")
+    time.sleep(3)
 
-    os.makedirs("face_data", exist_ok=True)
+    encodings = []
+    captured  = 0
 
-    encodings_collected = []
-    count       = 0
-    frame_count = 0
-    location    = None
+    print(f"Capturing {FRAMES_TO_CAPTURE} frames of your face...")
 
-    while count < PHOTOS_NEEDED:
+    while captured < FRAMES_TO_CAPTURE:
         ret, frame = cap.read()
         if not ret:
             continue
 
         frame = cv.flip(frame, 1)
-        frame_count += 1
 
-        # only run detection every N frames
-        if frame_count % DETECT_EVERY_N == 0:
-            location, _ = capture_face(frame)
+        # convert to RGB for face_recognition
+        rgb_frame = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
 
-        display = frame.copy()
-        cv.putText(display,
-                   f"Photo {count}/{PHOTOS_NEEDED}  —  Press SPACE to capture",
-                   (20, 40), cv.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+        locations, face_crop = capture_face(frame)
 
-        if location:
-            top, right, bottom, left = location
-            cv.rectangle(display, (left, top), (right, bottom), (0, 255, 0), 2)
-            cv.putText(display, "Face detected — ready to capture",
-                       (left, top - 10), cv.FONT_HERSHEY_SIMPLEX,
-                       0.55, (0, 255, 0), 2)
-        else:
-            cv.putText(display, "No face found — move closer",
-                       (20, 80), cv.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
-
-        cv.imshow("Registration", display)
-        key = cv.waitKey(1) & 0xFF
-
-        if key == 32 and location:  # SPACE pressed and face found
-            rgb      = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
-            encoding = face_recognition.face_encodings(rgb, [location])
-
-            if encoding:
-                encodings_collected.append(encoding[0])
-                count += 1
-                print(f"  Captured photo {count}/{PHOTOS_NEEDED}")
-
-                # flash green border to confirm capture
-                confirm = display.copy()
-                cv.rectangle(confirm, (left, top), (right, bottom), (0, 255, 0), 6)
-                cv.putText(confirm, f"Captured {count}/{PHOTOS_NEEDED}",
-                           (left, bottom + 25), cv.FONT_HERSHEY_SIMPLEX,
-                           0.65, (0, 255, 0), 2)
-                cv.imshow("Registration", confirm)
-                cv.waitKey(400)
-
-        if key == ord('q'):
-            print("Registration cancelled.")
-            cv.destroyAllWindows()
-            return False
-
-    # average all 5 encodings into one single array
-    final_encoding = np.mean(encodings_collected, axis=0)
-
-    # save as .npy
-    np.save(ENCODING_PATH, final_encoding)
-    print(f"\nRegistration complete. Encoding saved to {ENCODING_PATH}")
-    print(f"Encoding shape: {final_encoding.shape}")  # should be (128,)
-
-    cv.destroyWindow("Registration")
-    return True
-
-
-# ─── STEP 4: LOAD SAVED ENCODING ──────────────────────────
-def load_encoding():
-    """
-    Load the saved face encoding from disk.
-    Returns numpy array of shape (128,) or None if file not found.
-    """
-    if not os.path.exists(ENCODING_PATH):
-        return None
-
-    encoding = np.load(ENCODING_PATH)
-    print(f"Encoding loaded from {ENCODING_PATH}  shape: {encoding.shape}")
-    return encoding
-
-
-# ─── STEP 5: RECOGNIZE FACE ───────────────────────────────
-def recognize_face(frame, location, saved_encoding):
-    """
-    Compare current face to saved encoding.
-    Returns (match: bool, distance: float)
-    Lower distance = more similar. Under MATCH_THRESHOLD = same person.
-    """
-    rgb       = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
-    encodings = face_recognition.face_encodings(rgb, [location])
-
-    if not encodings:
-        return False, 1.0
-
-    distance = face_recognition.face_distance([saved_encoding], encodings[0])[0]
-    match    = distance < MATCH_THRESHOLD
-
-    print(f"Face distance: {distance:.3f}  (need < {MATCH_THRESHOLD})")
-    return match, distance
-
-
-# ─── MAIN AUTH FUNCTION ────────────────────────────────────
-def run_auth():
-    """
-    Master function. Call this from main.py.
-    Returns True if authenticated, exits program if failed.
-    """
-    cap = cv.VideoCapture(0)
-
-    # check if user is already registered
-    saved_encoding = load_encoding()
-
-    if saved_encoding is None:
-        print("No face data found. Starting registration...")
-        success = register_user(cap)
-        if not success:
-            cap.release()
-            return False
-        saved_encoding = load_encoding()
-
-    # ── LOGIN MODE ──
-    print("\n--- LOGIN MODE ---")
-    print("Look at the camera...")
-
-    MAX_ATTEMPTS = 100  # frames to try before giving up
-    attempt      = 0
-    frame_count  = 0
-    location     = None
-    face_crop    = None
-
-    while attempt < MAX_ATTEMPTS:
-        ret, frame = cap.read()
-        if not ret:
-            continue
-
-        frame = cv.flip(frame, 1)
-        frame_count += 1
-
-        # only run face detection every N frames
-        if frame_count % DETECT_EVERY_N == 0:
-            location, face_crop = capture_face(frame)
-            attempt += 1  # count detection attempts not total frames
-
-        # always draw the display every frame for smooth video
-        display = frame.copy()
-        cv.putText(display, f"Authenticating...  ({attempt}/{MAX_ATTEMPTS})",
-                   (20, 40), cv.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
-
-        if location is None:
-            cv.putText(display, "No face detected — move closer",
-                       (20, 80), cv.FONT_HERSHEY_SIMPLEX, 0.6, (0, 100, 255), 2)
-            cv.imshow("Authentication", display)
+        # no face found in this frame
+        if locations is None:
+            cv.putText(frame, "No face detected — move closer",
+                       (20, 40), cv.FONT_HERSHEY_SIMPLEX,
+                       0.7, (0, 0, 255), 2)
+            cv.imshow("Registration", frame)
             cv.waitKey(1)
             continue
 
-        # draw last known face box every frame
-        top, right, bottom, left = location
-        cv.rectangle(display, (left, top), (right, bottom), (255, 255, 0), 2)
+        # get encoding using RGB frame
+        face_encodings = fr.face_encodings(rgb_frame, locations)
 
-        # only run checks on detection frames
-        if frame_count % DETECT_EVERY_N == 0:
+        if len(face_encodings) == 0:
+            continue
 
-            # ── ANTI SPOOF: TEXTURE CHECK ──
-            real = check_texture(face_crop)
+        encodings.append(face_encodings[0])
+        captured += 1
 
-            if not real:
-                cv.putText(display, "SPOOF DETECTED — ACCESS DENIED",
-                           (20, 80), cv.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
-                cv.rectangle(display, (left, top), (right, bottom), (0, 0, 255), 3)
-                cv.imshow("Authentication", display)
-                cv.waitKey(2000)
-                print("Spoof detected. Exiting.")
-                break
+        # show progress on screen
+        top, right, bottom, left = locations[0]
+        cv.rectangle(frame, (left, top), (right, bottom), (0, 255, 0), 2)
+        cv.putText(frame, f"Capturing {captured}/{FRAMES_TO_CAPTURE}",
+                   (20, 40), cv.FONT_HERSHEY_SIMPLEX,
+                   0.7, (0, 255, 0), 2)
 
-            # ── FACE RECOGNITION ──
-            match, distance = recognize_face(frame, location, saved_encoding)
-
-            if match:
-                confidence = int((1 - distance) * 100)
-                cv.putText(display, f"ACCESS GRANTED  ({confidence}% match)",
-                           (20, 80), cv.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
-                cv.rectangle(display, (left, top), (right, bottom), (0, 255, 0), 3)
-                cv.imshow("Authentication", display)
-                cv.waitKey(1500)
-                cap.release()
-                cv.destroyAllWindows()
-                print("Authentication successful.")
-                return True
-
-            else:
-                cv.putText(display, f"Unknown face  (distance: {distance:.2f})",
-                           (20, 80), cv.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
-
-        cv.imshow("Authentication", display)
+        cv.imshow("Registration", frame)
         cv.waitKey(1)
 
-    # all attempts exhausted
+        # small delay so each frame is slightly different
+        time.sleep(REGISTRATION_DELAY)
+
+    # save all encodings to disk
+    with open(ENCODINGS_FILE, "wb") as f:
+        pickle.dump(encodings, f)
+
+    print(f"\n[ REGISTRATION COMPLETE ]")
+    print(f"Saved {len(encodings)} encodings to {ENCODINGS_FILE}")
+    print("Restart the program to login.\n")
+
+    cv.destroyWindow("Registration")
+
+
+def recognize_user(frame):
+    """
+    Compares face in current frame against saved encodings.
+    Returns:
+    - matched    (True or False)
+    - distance   (float — how close, lower is better)
+    - confidence (float — percentage 0 to 100)
+    """
+    # load saved encodings from disk
+    with open(ENCODINGS_FILE, "rb") as f:
+        known_encodings = pickle.load(f)
+
+    # convert to RGB for face_recognition
+    rgb_frame = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
+
+    # find face location
+    locations, _ = capture_face(frame)
+
+    if locations is None:
+        return False, None, None
+
+    # get encoding using RGB frame
+    face_encodings = fr.face_encodings(rgb_frame, locations)
+
+    if len(face_encodings) == 0:
+        return False, None, None
+
+    unknown_encoding = face_encodings[0]
+
+    # compare against every saved encoding
+    distances = fr.face_distance(known_encodings, unknown_encoding)
+    matches   = fr.compare_faces(known_encodings, unknown_encoding,
+                                 tolerance=MATCH_THRESHOLD)
+
+    # find the best match out of all saved encodings
+    best_index    = np.argmin(distances)
+    best_distance = distances[best_index]
+    best_match    = matches[best_index]
+    confidence    = round((1 - best_distance) * 100, 1)
+
+    return best_match, best_distance, confidence
+
+
+def run_auth():
+    """
+    Master function — runs the full authentication flow.
+    Returns True if authentication passed.
+    Returns False if denied or timed out.
+    """
+    cap = cv.VideoCapture(0, cv.CAP_DSHOW)   # CAP_DSHOW for Windows
+
+    if not cap.isOpened():
+        print("ERROR: Cannot open camera")
+        return False
+
+    # first time — no encodings file exists yet
+    if not os.path.exists(ENCODINGS_FILE):
+        print("No registered user found.")
+        register_user(cap)
+        cap.release()
+        cv.destroyAllWindows()
+        return False   # restart needed after registration
+
+    # every time after — login mode
+    print("\n[ AUTHENTICATION MODE ]")
+    print("Look at the camera...")
+
+    auth_result = False
+    start_time  = time.time()
+    TIMEOUT     = 10   # seconds before giving up
+
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            continue
+
+        frame = cv.flip(frame, 1)
+
+        # check timeout
+        elapsed = time.time() - start_time
+        if elapsed > TIMEOUT:
+            print("Authentication timed out.")
+            break
+
+        # try to recognize current face
+        matched, distance, confidence = recognize_user(frame)
+
+        # draw UI on frame
+        locations, _ = capture_face(frame)
+
+        if locations is not None:
+            top, right, bottom, left = locations[0]
+
+            if matched:
+                color = (0, 255, 0)    # green = match
+                label = f"GRANTED  {confidence}%"
+            else:
+                color = (0, 0, 255)    # red = no match
+                label = f"DENIED  {confidence}%" if confidence else "DENIED"
+
+            # box around face
+            cv.rectangle(frame, (left, top), (right, bottom), color, 2)
+
+            # label below box
+            cv.rectangle(frame, (left, bottom), (right, bottom + 35),
+                         color, cv.FILLED)
+            cv.putText(frame, label, (left + 6, bottom + 25),
+                       cv.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
+
+        # show countdown timer
+        cv.putText(frame, f"Time: {int(TIMEOUT - elapsed)}s",
+                   (20, 40), cv.FONT_HERSHEY_SIMPLEX,
+                   0.7, (255, 255, 255), 2)
+
+        cv.imshow("Face Authentication", frame)
+        cv.waitKey(1)
+
+        # if matched hold screen for 1.5 seconds then proceed
+        if matched:
+            print(f"\n[ ACCESS GRANTED ] Confidence: {confidence}%")
+            time.sleep(1.5)
+            auth_result = True
+            break
+
     cap.release()
     cv.destroyAllWindows()
-    print("Authentication failed. Exiting.")
-    return False
+    return auth_result
 
 
-# ─── RUN STANDALONE FOR TESTING ───────────────────────────
 if __name__ == "__main__":
     result = run_auth()
+
     if result:
-        print("You are in. Main program would start here.")
+        print("Proceeding to main menu...")
+        # main menu will be called here later
     else:
-        print("Access denied. Exiting.")
-        exit()
+        print("Authentication failed. Exiting.")
