@@ -6,7 +6,7 @@ mp_face_mesh = mp.solutions.face_mesh
 
 face_mesh = mp_face_mesh.FaceMesh(
     max_num_faces=1,
-    refine_landmarks=True
+    refine_landmarks=True,
 )
 
 cap = cv.VideoCapture(0)

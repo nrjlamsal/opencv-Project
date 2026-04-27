@@ -42,33 +42,38 @@ class faceMeshDetector():
         if self.results.multi_face_landmarks:
             myFace = self.results.multi_face_landmarks[faceNo]
 
-            # cx, cy = int(l_outer_corner.x * w), int(l_inner_corner.y * h)
-            # cv.circle(img, (cx, cy), 1, (0, 255, 0), cv.FILLED)
-            l_outer_corner = myFace[33]
-            l_inner_corner = myFace[133]
-            l_lidregion = myFace[145]
-            l_eyebrowregion = myFace[7]
-            r_outer_corner = myFace[362]
-            r_inner_corner = myFace[263]
-            r_lidregion = myFace[386]
-            r_eyebrowregion = myFace[374]
+        # Select eye landmarks
+        ids = [33, 133, 159, 145, 362, 263, 386, 374]
 
-            self.lmList.append(l_outer_corner)
-            self.lmList.append(l_inner_corner)
-            self.lmList.append(l_lidregion)
-            self.lmList.append(l_eyebrowregion)
-            self.lmList.append(r_outer_corner)
-            self.lmList.append(r_inner_corner)
-            self.lmList.append(r_lidregion)
-            self.lmList.append(r_eyebrowregion)
-            
-            for (lx,ly) in self.lmList:
-                cx, cy = int(lm.x * w), int(lm.y * h)
-                cv.circle(img, (cx, cy), 1, (0, 255, 0), cv.FILLED)
-            
-            return self.lmlist
+        for id in ids:
+            lm = myFace.landmark[id]
+            cx, cy = int(lm.x * w), int(lm.y * h)
 
-             
+            self.lmList.append([id, cx, cy])
+
+            if draw:
+                cv.circle(img, (cx, cy), 3, (0, 255, 0), cv.FILLED)
+
+        return self.lmList  
+    
+    def findEyeCenter(self, lmList):
+    # Left eye
+     x1, y1 = lmList[0][1], lmList[0][2]  # 33
+     x2, y2 = lmList[1][1], lmList[1][2]  # 133
+
+     left_cx = (x1 + x2) // 2
+     left_cy = (y1 + y2) // 2
+
+    # Right eye
+     x3, y3 = lmList[4][1], lmList[4][2]  # 362
+     x4, y4 = lmList[5][1], lmList[5][2]  # 263
+
+     right_cx = (x3 + x4) // 2
+     right_cy = (y3 + y4) // 2
+
+     return (left_cx, left_cy), (right_cx, right_cy)
+
+
                 
                 
                 
@@ -76,19 +81,9 @@ class faceMeshDetector():
 
 
 
-        #     for id, lm in enumerate(myFace.landmark):
-        #         h, w, c = img.shape
-        #         cx, cy = int(lm.x * w), int(lm.y * h)
-
-        #         self.lmList.append([id, cx, cy])
-
-        #         if draw:
-        #             cv.circle(img, (cx, cy), 1, (0, 255, 0), cv.FILLED)
-
-        # return self.lmList
+    
 
 
-# 🔹 Testing (same style as your hand module)
 if __name__ == "__main__":
     import time
 
@@ -102,10 +97,13 @@ if __name__ == "__main__":
         img = cv.flip(img, 1)
 
         img = detector.findFaces(img, draw=False)
-        lmList = detector.findPosition(img, draw=True)
+        lmList = detector.findPosition(img, draw=False)
 
         if len(lmList) != 0:
-            print(lmList[1])  # example: print 1 landmark
+              left_eye, right_eye = detector.findEyeCenter(lmList)
+              cv.circle(img, left_eye, 1, (0, 0, 255), cv.FILLED)
+              cv.circle(img, right_eye, 1, (255, 0, 0), cv.FILLED)
+          
 
         # FPS
         cTime = time.time()

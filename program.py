@@ -6,7 +6,7 @@ face_cascade  = cv.CascadeClassifier(cv.data.haarcascades + "haarcascade_frontal
 eye_cascade   = cv.CascadeClassifier(cv.data.haarcascades + "haarcascade_eye.xml")
 smile_cascade = cv.CascadeClassifier(cv.data.haarcascades + "haarcascade_smile.xml")
 
-cap = cv.VideoCapture(1)
+cap = cv.VideoCapture(0)
 cap.set(cv.CAP_PROP_FRAME_WIDTH, 1280)
 cap.set(cv.CAP_PROP_FRAME_HEIGHT, 720)
 cap.set(cv.CAP_PROP_AUTOFOCUS, 1)
