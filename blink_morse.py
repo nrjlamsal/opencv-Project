@@ -1,5 +1,5 @@
 """
-👁️ Blink Morse Code
+ Blink Morse Code
 Uses webcam + face mesh to detect blinks and decode Morse code.
 
 How it works:
