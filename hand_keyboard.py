@@ -1,5 +1,5 @@
 """
-✋ Air Keyboard — Hand-Controlled Virtual Keyboard
+ Air Keyboard — Hand-Controlled Virtual Keyboard
   - Move index finger       → hover / aim at keys
   - Hold on a key (~1s)     → key presses (progress ring shows countdown)
   - Hold on a suggestion    → auto-completes the word

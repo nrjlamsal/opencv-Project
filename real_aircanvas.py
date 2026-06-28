@@ -1,5 +1,5 @@
 """
-🎨 Air Canvas 
+ Air Canvas 
   - Deque-based point storage for gap-free strokes
 
 Gesture Controls:
@@ -113,15 +113,14 @@ def run_canvas():
     two_hand_count = 0
 
     print("\n==============================================")
-    print("  AIR CANVAS - Gap-Free Edition")
+    print("  AIR CANVAS ")
     print("==============================================")
-    print("  Index finger ONLY   ->  DRAW")
-    print("  Index + Middle UP   ->  SELECT / TOOLBAR")
-    print("  Everything else     ->  PEN LIFT")
-    print("  Both hands (~0.5s)  ->  Return to menu")
+    print("  Index finger ONLY =  DRAW")
+    print("  Index + Middle UP =  SELECT / TOOLBAR")
+    print("  Everything else   =  PEN LIFT")
+    print("  Both hands   =  Return to menu")
     print("  Press 'q' or ESC to exit")
     print("  Press 'c' to clear canvas")
-    print("  Press 'z' to undo  or  'y' to redo")
     print("  Press '+'/'-' to adjust brush size")
     print("==============================================\n")
 

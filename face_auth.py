@@ -1,5 +1,5 @@
 """
-🔐 Face Authentication Module
+ Face Authentication Module
 
 Provides user registration and facial recognition login using the
 face_recognition library. On first run, the user registers their face
