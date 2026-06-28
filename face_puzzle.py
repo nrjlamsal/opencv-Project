@@ -1,5 +1,5 @@
 """
-🧩 Face Puzzle — Live Sliding Puzzle with Your Face!
+ Face Puzzle — Live Sliding Puzzle with Your Face!
 
 Displays a 3*3 sliding puzzle built from your LIVE webcam feed.
 Each tile shows a real-time portion of the camera image, rearranged
