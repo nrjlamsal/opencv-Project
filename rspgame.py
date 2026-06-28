@@ -1,8 +1,4 @@
-"""
-  - SPACE = start round
-  - 'r'   = reset scores
-  - 'q'   = quit / back to menu
-"""
+
 
 import cv2 as cv
 import numpy as np
@@ -54,10 +50,6 @@ def draw_rounded_rect(img, x, y, w, h, r, color, alpha=1.0):
 
 
 def detect_gesture(hand_landmarks):
-    """
-    Detect Rock, Paper, or Scissors from hand landmarks.
-
-    """
     lm = hand_landmarks.landmark
 
    
@@ -98,7 +90,6 @@ def get_winner(player, computer):
 
 
 def draw_gesture_icon(canvas, gesture, cx, cy, size, color):
-    """Draw a simple visual representation of the gesture."""
     if gesture == "rock":
         cv.circle(canvas, (cx, cy), size, color, -1)
         cv.circle(canvas, (cx, cy), size, (255, 255, 255), 2)

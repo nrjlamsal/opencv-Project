@@ -1,16 +1,4 @@
-"""
- Blink Morse Code
-Uses webcam + face mesh to detect blinks and decode Morse code.
 
-How it works:
-  - Short blink (< 0.4s) is  DOT  (·)
-  - Long blink  (0.4 to 1.5s) is DASH (-)
-  - Eyes open for 1.5s decodes current morse to letter
-  - Eyes open for 3.0s adds space between words
-  - Press 'c' to clear, 'q' to quit
-
-
-"""
 
 import cv2 as cv
 import numpy as np
@@ -83,10 +71,6 @@ CHAR_TO_MORSE = {v: k for k, v in MORSE_TO_CHAR.items()}
 
 
 def eye_aspect_ratio(landmarks, eye_indices, w, h):
-    """
-    calculate Eye Aspect Ratio (EAR).
-    Low EAR = eye closed, High EAR = eye open.
-    """
     pts = []
     for idx in eye_indices:
         lm = landmarks[idx]
@@ -106,7 +90,6 @@ def eye_aspect_ratio(landmarks, eye_indices, w, h):
 
 
 def draw_rounded_rect(img, x, y, w, h, r, color, alpha=1.0):
-    """Draw a filled rectangle with rounded corners"""
     overlay = img.copy()
     cv.rectangle(overlay, (x + r, y),(x + w - r, y + h), color, -1)
     cv.rectangle(overlay, (x, y + r),(x + w,y + h - r),color, -1)
@@ -122,7 +105,6 @@ def draw_rounded_rect(img, x, y, w, h, r, color, alpha=1.0):
 
 
 def morse_to_visual(morse_seq):
-    """Convert morse string  to spaced dots and dashes for display"""
     visual = ""
     for ch in morse_seq:
         if ch == ".":
@@ -132,9 +114,6 @@ def morse_to_visual(morse_seq):
     return visual.strip()
 
 def run_morse():
-    """
-    Launch the Blink Morse Code communication tool.
-    """
     cap = cv.VideoCapture(0, cv.CAP_DSHOW)
     if not cap.isOpened():
         print("[ERROR] Cannot open camera for Blink Morse Code.")

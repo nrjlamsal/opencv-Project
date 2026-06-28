@@ -1,16 +1,4 @@
-"""
- Face Authentication Module
 
-Provides user registration and facial recognition login using the
-face_recognition library. On first run, the user registers their face
-(15 frames captured). On subsequent runs, the system authenticates
-by comparing the live camera feed against saved encodings.
-
-    - Encodings stored locally in user_encodings.pkl
-    - Match threshold: 0.5 (changeable)
-    - 10 second timeout for authentication attempts
-
-"""
 
 import cv2 as cv
 import face_recognition as fr
@@ -27,12 +15,6 @@ REGISTRATION_DELAY = 0.3
 
 
 def capture_face(frame):
-    """
-    Takes a BGR frame from OpenCV.
-    Converts to RGB for face_recognition.
-    Returns face locations and cropped face.
-    Returns None, None if no face found.
-    """
     # OpenCV gives BGR — face_recognition needs RGB
     rgb_frame = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
 
@@ -48,12 +30,6 @@ def capture_face(frame):
 
 
 def register_user(cap):
-    """
-    Register a new user by capturing face encodings from the webcam.
-
-    Captures FRAMES_TO_CAPTURE frames, extracts face encodings from each,
-    and saves them to ENCODINGS_FILE for future authentication.
-    """
    
     print("\n[ REGISTRATION MODE ]")
     print("Look at the camera. Registration starts in 3 seconds")
@@ -113,13 +89,6 @@ def register_user(cap):
 
 
 def recognize_user(frame, known_encodings):
-    """
-    Compare the face in the current frame against saved encodings.
-
-    Returns:
-        (matched, distance, confidence) — matched is True if the face
-        matches a saved encoding within MATCH_THRESHOLD.
-    """
    
 
     rgb_frame = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
@@ -148,13 +117,6 @@ def recognize_user(frame, known_encodings):
 
 
 def run_auth():
-    """
-    Run the face authentication flow.
-
-    If no saved encodings exist, enters registration mode.  Otherwise,
-    enters authentication mode with a 10-second timeout.  Returns True
-    if the user is successfully authenticated.
-    """
    
     cap = cv.VideoCapture(0)   
 

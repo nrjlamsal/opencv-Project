@@ -1,20 +1,4 @@
-"""
- Face Puzzle — Live Sliding Puzzle with Your Face!
 
-Displays a 3*3 sliding puzzle built from your LIVE webcam feed.
-Each tile shows a real-time portion of the camera image, rearranged
-by the puzzle shuffle.  Tiles are numbered 1-8 so you can track them.
-
-Controls:
-    - Arrow keys  = slide tiles
-    - 'r' = reshuffle the puzzle
-    - 'q'  = quit
-    - Show two hands = return to menu
-
-
-
-The puzzle is shuffled via valid random moves to guarantee solvability.
-"""
 
 import cv2 as cv
 import numpy as np
@@ -66,9 +50,6 @@ def get_neighbors(index):
 
 
 def create_shuffle():
-    """
-    Create a shuffled tile mapping via valid moves 
-    """
     tile_map = list(range(TOTAL_TILES))   # identity=[0,1,2,...,8]
     empty_pos = TOTAL_TILES - 1           
 
@@ -87,7 +68,6 @@ def create_shuffle():
 
 
 def is_solved(tile_map, empty_pos):
-    """Check if the puzzle is in the solved state"""
     for i in range(TOTAL_TILES):
         if i == empty_pos:
             continue
@@ -97,7 +77,6 @@ def is_solved(tile_map, empty_pos):
 
 
 def draw_rounded_rect(img, x, y, w, h, r, color, alpha=1.0):
-    """Draw a filled rectangle with rounded corners"""
     overlay = img.copy()
     cv.rectangle(overlay, (x + r, y), (x + w - r, y + h), color, -1)
     cv.rectangle(overlay, (x, y + r), (x + w, y + h - r), color, -1)

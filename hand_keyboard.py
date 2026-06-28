@@ -1,12 +1,4 @@
-"""
- Air Keyboard — Hand-Controlled Virtual Keyboard
-  - Move index finger       → hover / aim at keys
-  - Hold on a key (~1s)     → key presses (progress ring shows countdown)
-  - Hold on a suggestion    → auto-completes the word
-  - Move away               → cancels the press
-  - Show open palm          → toggle keyboard layout (letters ↔ numbers/symbols)
-  - Press ESC               → quit
-"""
+
 
 import cv2
 import mediapipe as mp
@@ -93,10 +85,6 @@ WORD_LIST = sorted(set([
 
 
 def get_suggestions(typed_text, n=NUM_SUGGESTIONS):
-    """
-    Get word suggestions based on the current partial word being typed.
-
-    """
     # Extract the last partial word
     words = typed_text.lower().split()
     if not words or typed_text.endswith(" "):
@@ -115,10 +103,6 @@ def get_suggestions(typed_text, n=NUM_SUGGESTIONS):
 
 
 def build_suggestion_rects(suggestions):
-    """
-    Build clickable rectangles for the suggestion bar above the keyboard.
-
-    """
     if not suggestions:
         return []
 
@@ -135,9 +119,6 @@ def build_suggestion_rects(suggestions):
 
 
 def draw_suggestions(frame, sug_rects, hovered_sug, dwell_sug, dwell_progress):
-    """
-    Render the suggestion buttons above the keyboard.
-    """
     overlay = frame.copy()
     for word, x1, y1, x2, y2 in sug_rects:
         if word == dwell_sug and dwell_progress > 0:

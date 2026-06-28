@@ -1,19 +1,4 @@
-"""
- Air Canvas 
-  - Deque-based point storage for gap-free strokes
 
-Gesture Controls:
-    Index finger ONLY up    -> DRAW mode (index tip = pen)
-    Index + Middle fingers   -> SELECT mode (toolbar)
-    Everything else          -> PEN LIFT
-    Both hands (~0.5s)       -> Return to menu
-
-Keyboard Shortcuts:
-    c = clear canvas
-    z / y = undo / redo
-    +  / - = increase / decrease brush size
-    q / ESC = quit
-"""
 
 import cv2 as cv
 import numpy as np
@@ -30,16 +15,12 @@ def get_rainbow_color():
 
 
 def finger_distance(lmlist, a, b):
-    """Pixel distance between two landmarks"""
     return math.hypot(lmlist[a][1] - lmlist[b][1],lmlist[a][2] - lmlist[b][2])
 
 
 # rendering strokes
 
 def render_strokes(canvas, strokes):
-    """"
-    Render strokes onto a canvas by drawing lines between consecutive points.
-    """
     for stroke in strokes:
         pts = stroke["points"]
         color = stroke["color"]
@@ -52,7 +33,6 @@ def render_strokes(canvas, strokes):
 
 
 def bake_stroke_to_canvas(img_canvas, stroke):
-    """Permanently render a completed stroke onto the canvas."""
     pts = stroke["points"]
     color = stroke["color"]
     thick = stroke["thickness"]
@@ -75,9 +55,6 @@ def composite_canvas(frame, img_canvas, current_stroke=None):
 #  main driver function
 
 def run_canvas():
-    """
-    Launch the Air Canvas drawing application.
-    """
     eraserThickness = 50
 
     # gesture buffer

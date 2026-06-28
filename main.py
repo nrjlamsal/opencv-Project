@@ -137,7 +137,6 @@ VERSION = "1.0.0"
 
 
 def draw_rounded_rect(img, x, y, w, h, r, color, alpha=1.0):
-    """Draw a rectangle with rounded corner"""
     overlay = img.copy()
     cv.rectangle(overlay, (x + r, y), (x + w - r, y + h), color, -1)
     cv.rectangle(overlay, (x, y + r), (x + w, y + h - r), color, -1)
@@ -152,7 +151,6 @@ def draw_rounded_rect(img, x, y, w, h, r, color, alpha=1.0):
 
 
 def draw_progress_ring(img, cx, cy, radius, progress, color, thickness=3):
-    """Draw a circular progress arc  around a center point"""
     angle = int(360 * progress)
     if angle > 0:
         cv.ellipse(img, (cx, cy), (radius, radius), -90, 0, angle, color, thickness)
